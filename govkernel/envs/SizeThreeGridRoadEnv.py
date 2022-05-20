@@ -1,35 +1,37 @@
 # Implementation of the 3x3 road network for MultiAgent RL.
 class SizeThreeGridRoadEnv(gym.Env):
-    # Defining the Driving Agent with name and gas values.
+    # Defining the Driving Agent with name and gas values plus package flag.
     class DriverAgent():
         def __init__(self, name, gas, package):
             self.name = name
             self.gas = gas
             self.package = package
 
-    # Defining different possible world configurations.
-    world_one = np.array([[1, 0, 0],
-                  [3, 0, 2],
-                  [0, 0, 4]])
-    world_two = np.rot90(world_one)
-    world_three = np.rot90(world_two)
-    world_four = np.rot90(world_three)
-    # Even the initial world configuration is defined to be different.
-    prob = random.uniform(0, 1)
-    # Default value assignment below.
-    world = world_one
-    if prob > 0.25 and prob <= 0.25:
-        world = world_two
-    elif prob > 0.5 and prob <= 0.75:
-        world = world_three
-    elif prob > 0.75 and prob <= 1:
-        world = world_four
-
     def __init__(self):
-        self.world_start = world # This 'world_start', if reset() is called, never gets used.
+        # super(SizeThreeGridRoadEnv, self).__init__()
+        # Defining different possible world configurations.
+        self.world_one = np.array([[1, 0, 0],
+                      [3, 0, 2],
+                      [0, 0, 4]])
+        self.world_two = np.rot90(self.world_one)
+        self.world_three = np.rot90(self.world_two)
+        self.world_four = np.rot90(self.world_three)
+        # Even the initial world configuration is defined to be different upon
+        # environment instantiation. 
+        prob = random.uniform(0, 1)
+        # Default value assignment below.
+        self.world = self.world_one
+        if prob > 0.25 and prob <= 0.25:
+            self.world = self.world_two
+        elif prob > 0.5 and prob <= 0.75:
+            self.world = self.world_three
+        elif prob > 0.75 and prob <= 1:
+            self.world = self.world_four
+        self.world_start = self.world # This 'world_start', if reset() is called, never gets used.
         # Adding five actions for the environment.
-        # 0: up, 1: right, 2: down, 3: left, 4: stay/pass, 5: pick, 6: drop
-        self.action_space = spaces.Discrete(7)
+        # 0: up, 1: right, 2: down, 3: left, 4: stay/pass chance, 5: drop
+        # When agent reaches at package location it automatically picks up the package.
+        self.action_space = spaces.Discrete(6)
         shape_0 = np.size(self.world_start, 0)
         shape_1 = np.size(self.world_start, 1)
         self.observation_space = spaces.Box(low=0,
@@ -40,13 +42,13 @@ class SizeThreeGridRoadEnv(gym.Env):
         self.current_episode = 0
         self.success_episode = []
         # Defining the driver agents in the environment.
-        self.agent_one = DriverAgent(1,4,0) # 3 integer value, when carrying package.
-        self.agent_two = DriverAgent(2,4,0) # 3 integer value, when carrying package.
+        self.agent_one = self.DriverAgent(1,4,0) # 3 integer value, when carrying package.
+        self.agent_two = self.DriverAgent(2,4,0) # 3 integer value, when carrying package.
 
     def reset(self):
         # Game like formulation, each player agent moves one step at a time.
-        self.agent_one = DriverAgent(1,4,0) # Instantiating agent 1 again.
-        self.agent_two = DriverAgent(2,4,0) # Instantiating agent 2 again.
+        self.agent_one = self.DriverAgent(1,4,0) # Instantiating agent 1 again.
+        self.agent_two = self.DriverAgent(2,4,0) # Instantiating agent 2 again.
         self.current_player = self.agent_one
         # 'P' means the game is playable, 'W' means delivered, 'L' means no delivery.
         self.state = 'P'
@@ -56,13 +58,13 @@ class SizeThreeGridRoadEnv(gym.Env):
         # Even the initial world configuration should be different.
         prob = random.uniform(0, 1)
         if prob > 0.25 and prob <= 0.25:
-            self.world_start = world_two
+            self.world_start = self.world_two
         elif prob > 0.5 and prob <= 0.75:
-            self.world_start = world_three
+            self.world_start = self.world_three
         elif prob > 0.75 and prob <= 1:
-            self.world_start = world_four
+            self.world_start = self.world_four
         elif prob < 0.25:
-            self.world_start = world_one
+            self.world_start = self.world_one
         self.world = np.copy(self.world_start) # The self.world can be different from intial world.
         # no exploration_prize and bonus_reward as per my design.
         return self._next_observation()
@@ -101,11 +103,16 @@ class SizeThreeGridRoadEnv(gym.Env):
                     self.current_player.gas = self.current_player.gas - 1
 
                 elif next_pos[0] >= 0 and int(self.world[next_pos] == 4):
-                    self.world[next_pos] = self.current_player.name*10 + 4 # like for player 24, for example.
-                    self.world[current_pos] = 0
-                    self.state = 'W' # and the episode, should end at that moment.
-                    # Reducing the agent's gas by 1.
-                    self.current_player.gas = self.current_player.gas - 1
+                    # player should only be allowed this transition to this position
+                    # when it is having the package with it.
+                    if self.current_player.package == 3:
+                        self.world[next_pos] = self.current_player.name # like 34 are already there, for example.
+                        self.world[current_pos] = 0
+                        self.state = 'W' # and the episode, should end at that moment.
+                        # Reducing the agent's gas by 1.
+                        self.current_player.gas = self.current_player.gas - 1
+                    else:
+                        pass
 
 
             elif action == 1:
@@ -130,14 +137,16 @@ class SizeThreeGridRoadEnv(gym.Env):
                     self.current_player.gas = self.current_player.gas - 1
 
                 elif next_pos[1] < limit and int(self.world[next_pos] == 4):
-                    # 4, i.e. delivery position should only be accessed when agent has the package.
+                    # player should only be allowed this transition to this position
+                    # when it is having the package with it.
                     if self.current_player.package == 3:
-                        self.world[next_pos] = 34 # like for player 34, for example.
+                        self.world[next_pos] = self.current_player.name # like 34 are already there, for example.
                         self.world[current_pos] = 0
-                        self.state = 'W'
+                        self.state = 'W' # and the episode, should end at that moment.
                         # Reducing the agent's gas by 1.
                         self.current_player.gas = self.current_player.gas - 1
-                    # else, the action stays ineffective in nature.
+                    else:
+                        pass
 
 
             elif action == 2:
@@ -162,14 +171,16 @@ class SizeThreeGridRoadEnv(gym.Env):
                     self.current_player.gas = self.current_player.gas - 1
 
                 elif next_pos[0] < limit and int(self.world[next_pos] == 4):
-                    # 4, i.e. delivery position should only be accessed when agent has the package.
+                    # player should only be allowed this transition to this position
+                    # when it is having the package with it.
                     if self.current_player.package == 3:
-                        self.world[next_pos] = 34 # like for player 34, for example.
+                        self.world[next_pos] = self.current_player.name # like 34 are already there, for example.
                         self.world[current_pos] = 0
-                        self.state = 'W'
+                        self.state = 'W' # and the episode, should end at that moment.
                         # Reducing the agent's gas by 1.
                         self.current_player.gas = self.current_player.gas - 1
-                    # else, the action stays ineffective in nature.
+                    else:
+                        pass
 
             elif action == 3:
                 next_pos = (current_pos[0], current_pos[1] - 1)
@@ -192,26 +203,29 @@ class SizeThreeGridRoadEnv(gym.Env):
                     self.current_player.gas = self.current_player.gas - 1
 
                 elif next_pos[1] >= 0 and int(self.world[next_pos] == 4):
-                    # 4, i.e. delivery position should only be accessed when agent has the package.
+                    # player should only be allowed this transition to this position
+                    # when it is having the package with it.
                     if self.current_player.package == 3:
-                        self.world[next_pos] = 34 # like for player 34, for example.
+                        self.world[next_pos] = self.current_player.name # like 34 are already there, for example.
                         self.world[current_pos] = 0
-                        self.state = 'W'
+                        self.state = 'W' # and the episode, should end at that moment.
                         # Reducing the agent's gas by 1.
                         self.current_player.gas = self.current_player.gas - 1
-                    # else, the action stays ineffective in nature.
+                    else:
+                        pass
 
-            # Newly added logic based on three new possible actions
+            # Newly added logic based on three new possible actions.
             elif action == 4:
                 pass # Corresponding agent selects to not move at their chance.
             elif action == 5: # If agent is over the package, It has to pick it up.
                 # Agent can choose to drop the package, if it is loaded with it.
                 # After, dropping the package the agent should dissappear.
                 if self.current_player.package == 3:
-                    if world[current_pos] == 0:
+                    if self.world[current_pos] == 0:
                         self.world[current_pos] = 3
-                    elif world[current_pos] == 4: # Added as extra case, functionally shouldn't be triggered.
-                        self.world[current_pos] = 34
+                        # agent dissappears from the grid after this drop.
+                    elif self.world[current_pos] == 4: # Added as extra case, functionally shouldn't be triggered.
+                        self.world[current_pos] = self.current_player.name
                         self.state = 'W'
         else:
             # Player 1's gas is supposed to go empty first.
@@ -219,14 +233,19 @@ class SizeThreeGridRoadEnv(gym.Env):
             # drop the package in the environment and disappear from the location.
             if self.current_player.package == 3:
                 self.world[current_pos] = self.current_player.package
-            else
+                # agent dissappears from the grid after this drop.
+            else:
                 self.world[current_pos] = 0 # If gas is finished, agent should dissappear.
 
+        # If gas is empty for both agents, the episode should stop at that instant.
+        if self.agent_one.gas == 0 and self.agent_two.gas == 0:
+            self.state = 'L'
 
 
     def step(self, action):
         self._take_action(action)
         self.current_step += 1
+        # Uncomment the below statement out, while debugging.
         print(self.world)
 
         if self.state == "W":
@@ -245,9 +264,9 @@ class SizeThreeGridRoadEnv(gym.Env):
 
         # agents object used to identify agent properties.
         if self.current_player.name == 1:
-            self.current_player = agent_two
+            self.current_player = self.agent_two
         elif self.current_player.name == 2:
-            self.current_player = agent_one
+            self.current_player = self.agent_one
 
         if done:
             self.render_episode(self.state)
