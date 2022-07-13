@@ -1,3 +1,5 @@
+import gym
+import numpy as np
 # Implementation of the 3x3 road network for MultiAgent RL.
 class SizeThreeGridRoadEnv(gym.Env):
     # Defining the Driving Agent with name and gas values plus package flag.
