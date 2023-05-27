@@ -26,6 +26,7 @@ And, the robustness of our approach is currently only tested for spatial environ
 
 * [Environment Description](#environment-description)
 * [Approach Ideation](#approach-ideation)
+* [Experimentation Notebooks Description](#experimentation-notebooks-description)
 * [Experimentation Results and Discussion](#experimentation-results-and-discussion)
 * [Citing the Experiment Findings and Accompanying Theoretical Document](#citing-the-experiment-findings-and-accompanying-theoretical-document)
 
@@ -56,6 +57,18 @@ We believe that this would encourage the agents to also explore relatively farth
 For baseline comparison we develop a MORS environment wrapper as well which adds in extra rewards for partial subtask completion as well.
 Also, gives additional reward for pursuing the right direction towards the goal for faster convergence.
 For exactly comparing MORS with our Governance approaches, we also introduce a directional gradient reward signal which adds extra reward for agents exploring in the goal location direction.
+
+#### Experimentation Notebooks Description
+
+This section elaborates more about the Colab notebook files that were used to generate the experiment results for the proposed reward shaping approach.
+All the notebooks for each experiment are self-sufficient for replication, and the experimentation plot data is also stored in the `pipeline-artifacts/experiment-results` directory with self-explanatory naming convention.
+Also, for all the experimentation notebooks we need to manually fix the inherited environment type for the governance wrapper in order to execute each learning algorithm against different environment.
+
+* [`Performance Experiment Notebook`](experiment-notebooks/GridRoadEnv-algorithm-performance-experiment.ipynb): The performance experiment notebook tests A2C and PPO RL algorithm performances for _stablebaselines_ implementation against 3x3 fixed and random orientations with the proposed governance variants.
+* [`Scalability Experiment Notebook`](experiment-notebooks/GridRoadEnv-scalability-experiment.ipynb): The scalability experiment notebook tests PPO RL algorithm performance for _stablebaselines_ implementation against 5x5 and 10x10 fixed and random environment orientations with the proposed governance variants.
+* [`MORS Approach Comparison Notebook`](experiment-notebooks/GridRoadEnv-approach-comparison-experiment.ipynb): The MORS approach comparison experiment notebook tests the performance of the proposed governance approach against MORS method in 3x3 and 5x5 fixed and random environment orientations.
+* [`Dynamic Interaction Experiment Notebook`](experiment-notebooks/GridRoadEnv-delay-response-experiment.ipynb): The dynamic interaction comparison experiment notebook tests the performance of the proposed governance approach in 3x3 and 5x5 fixed and random environment orientations when both agents are taking alternating chances.
+* [`Gym Monitor Experiment Data Plotter Notebook`](experiment-notebooks/gym-monitor-experiment-data-plotter.ipynb): The data plotter notebook loads the csv files present in `pipeline-artifacts/experiment-results` directory and plots all the subplots highlighted below.
 
 #### Experimentation Results and Discussion
 
@@ -100,7 +113,7 @@ Essentially, the agents keep on roaming to accumulate extra reward before cooper
 
 `Note:` For large grids we also introduced the directional gradient into our reward scheme to guide agents towards the goal faster.
 
-`Experiment 3: Comparison with MORS baseline`
+`Experiment 3: Comparison with MORS Baseline`
 
 `Aim:` We intend to measure the performance improvements specifically achieved by our proposed approach in comparison to the MORS baseline.
 
@@ -116,7 +129,7 @@ And, the effect is even more pronounced on higher grid dimensions and rotating e
 
 `Note:` For comparison with the MORS approach we also introduced the directional gradient into our reward scheme for making the comparison more equivalent.
 
-`Experiment 4`
+`Experiment 4: Dynamic Agent Interactions Analysis`
 
 `Aim:` We intend to measure the performance robustness and adaptability when agents are acting in real-time scenarios with alternating action choices.
 
