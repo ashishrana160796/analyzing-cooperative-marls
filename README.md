@@ -63,7 +63,7 @@ For exactly comparing MORS with our Governance approaches, we also introduce a d
 This section elaborates more about the Colab notebook files that were used to generate the experiment results for the proposed reward shaping approach.
 All the notebooks for each experiment are self-sufficient for replication, and the experimentation plot data is also stored in the `pipeline-artifacts/experiment-results` directory with self-explanatory naming convention.
 Also, for all the experimentation notebooks we need to manually fix the inherited environment type for the governance wrapper in order to execute each learning algorithm against different environment.
-The [`Performance Experiment Notebook`](experiment-notebooks/grid-road-env-algorithm-performance-experiment.ipynb) contains detailed functional documentation of the build environments, governance wrappers, and model training process.
+The [`Performance Experiment Notebook`](experiment-notebooks/grid-road-env-algorithm-performance-experiment.ipynb) contains detailed functional documentation of the developed environments, governance wrappers, and model training process.
 The other experimentation notebooks only contain the section hyperlinks for easy notebook navigation to get higher level experiment process understanding.
 
 * [`Performance Experiment Notebook`](experiment-notebooks/grid-road-env-algorithm-performance-experiment.ipynb): The performance experiment notebook tests A2C and PPO RL algorithm performances for _stablebaselines_ implementation against 3x3 fixed and random orientations with the proposed governance variants. 
